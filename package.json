@@ -1,0 +1,21 @@
+{
+  "name": "o876-grid",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node -r esm ./node_modules/.bin/jasmine tests/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jasmine": "^3.6.1"
+  },
+  "dependencies": {
+    "esm": "^3.2.25"
+  }
+}

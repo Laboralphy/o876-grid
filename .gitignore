@@ -1,0 +1,5 @@
+# node.js modules folder
+node_modules
+
+# webstorm folder
+.idea
