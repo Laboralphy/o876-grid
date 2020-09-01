@@ -14,18 +14,17 @@ class Grid {
         this._events = new Events();
 	}
 
-    on() { this._events.on(...arguments); return this; }
-    off() { this._events.off(...arguments); return this; }
-    one() { this._events.once(...arguments); return this; }
-    emit() { this._events.emit(...arguments); return this; }
+    on(...args) { this._events.on(...args); return this; }
+    off(...args) { this._events.off(...args); return this; }
+    one(...args) { this._events.once(...args); return this; }
+    emit(...args) { this._events.emit(...args); return this; }
 
 
     /**
 	 * Setter/Getter for a dimensionnal array of cells, wich represents the grid content.
      * @param (x) {array}
-     * @return {Grid|array}
      */
-	setCells(x) {
+	set cells(x) {
         if (x !== undefined) {
             this._height = x.length;
             if (this._height) {
@@ -35,16 +34,15 @@ class Grid {
 			}
         }
 		this._cells = x;
-        return this;
 	}
 
-	getCells() {
+	get cells() {
 		return this._cells;
 	}
 
 	iterate(f) {
-        const w = this.getWidth();
-        const h = this.getHeight();
+        const w = this.width;
+        const h = this.height;
 		for (let y = 0; y < h; ++y) {
 			for (let x = 0; x < w; ++x) {
 				this.cell(x, y, f(x, y, this.cell(x, y)));
@@ -52,7 +50,7 @@ class Grid {
 		}
 	}
 
-	clipAxis(nStart, nRegionWidth, nGridWidth) {
+	_clipAxis(nStart, nRegionWidth, nGridWidth) {
 		const nEnd = nStart + nRegionWidth - 1;
         if (nEnd < 0 && nStart < 0) {
             return false;
@@ -76,26 +74,26 @@ class Grid {
 	}
 
 	getRegion(xRegion, yRegion, wRegion, hRegion) {
-        const wGrid = this.getWidth();
-        const hGrid = this.getHeight();
-        const xClip = this.clipAxis(xRegion, wRegion, wGrid);
-        const yClip = this.clipAxis(yRegion, hRegion, hGrid);
+        const wGrid = this.width;
+        const hGrid = this.height;
+        const xClip = this._clipAxis(xRegion, wRegion, wGrid);
+        const yClip = this._clipAxis(yRegion, hRegion, hGrid);
         if (xClip === false || yClip === false) {
         	return false;
 		}
 		return {
         	x: xClip.n,
 			y: yClip.n,
-			w: xClip.w,
-			h: yClip.w
+			width: xClip.w,
+			height: yClip.w
 		};
 	}
 
 	iterateRegion(xRegion, yRegion, wRegion, hRegion, f) {
-		const {x, y, w, h} = this.getRegion(xRegion, yRegion, wRegion, hRegion);
-        for (let yi = 0; yi < h; ++yi) {
+		const {x, y, width, height} = this.getRegion(xRegion, yRegion, wRegion, hRegion);
+        for (let yi = 0; yi < height; ++yi) {
         	let ym = y + yi;
-            for (let xi = 0; xi < w; ++xi) {
+            for (let xi = 0; xi < width; ++xi) {
                 let xm = x + xi;
                 this.cell(xm, ym, f(xm, ym, this.cell(xm, ym)));
             }
@@ -106,15 +104,13 @@ class Grid {
      * Setter/Getter for the grid width.
 	 * setting a new width will rebuild the grid
      * @param (w) {number}
-     * @return {Grid|number}
      */
-    setWidth(w) {
+    set width(w) {
 		this._rebuild(w, this._height);
         this._width = w;
-        return this;
     }
 
-    getWidth() {
+    get width() {
         return this._width;
     }
 
@@ -122,15 +118,13 @@ class Grid {
      * Setter/Getter for the grid height.
      * setting a new height will rebuild the grid
      * @param (h) {number}
-     * @return {Grid|number}
      */
-    setHeight(h) {
+    set height(h) {
         this._rebuild(this._width, h);
         this._height = h;
-        return this;
     }
 
-    getHeight() {
+    get height() {
         return this._height;
 	}
 
@@ -155,7 +149,7 @@ class Grid {
 		}
 		this._width = w;
 		this._height = h;
-		this.setCells(g);
+		this.cells = g;
 	}
 
     /**
