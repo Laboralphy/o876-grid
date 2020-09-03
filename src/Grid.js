@@ -8,16 +8,25 @@ import Events from 'events';
 
 class Grid {
 	constructor() {
-        this._cells = null;
+        this._cells = [];
         this._width = 0;
         this._height = 0;
         this._events = new Events();
+        this._lazyMode = false;
 	}
 
     on(...args) { this._events.on(...args); return this; }
     off(...args) { this._events.off(...args); return this; }
     one(...args) { this._events.once(...args); return this; }
     emit(...args) { this._events.emit(...args); return this; }
+
+	get lazy() {
+		return this._lazyMode;
+	}
+
+	set lazy(value) {
+		this._lazyMode = value;
+	}
 
 
     /**
@@ -106,7 +115,7 @@ class Grid {
      * @param (w) {number}
      */
     set width(w) {
-		this._rebuild(w, this._height);
+		this._resize(w, this._height);
         this._width = w;
     }
 
@@ -120,12 +129,50 @@ class Grid {
      * @param (h) {number}
      */
     set height(h) {
-        this._rebuild(this._width, h);
+        this._resize(this._width, h);
         this._height = h;
     }
 
     get height() {
         return this._height;
+	}
+
+	_lazyResizeRow(row, n, y) {
+    	const l = row.length;
+    	if (n < l) {
+    		// new length is small than current length
+    		// we must reduce row length
+    		row.splice(n);
+		} else if (n > l) {
+    		// we must add some cells
+			for (let x = l; x < n; ++x) {
+				const data = {x, y, width: n, height: this.height, cell: null};
+				this.emit('rebuild', data);
+				row.push(data.cell);
+			}
+		}
+	}
+
+	_lazyResizeGrid(w, h) {
+    	const l = this._cells.length;
+    	if (l > h) {
+    		// current size is greater than new size
+			this._cells.splice(h);
+		}
+    	if (l < h) {
+    		// current size is smaller than new size
+			// old row must be resized
+    		// new rows must be added and sized
+			for (let y = 0; y < h; ++y) {
+				if (y >= l) {
+					const row = [];
+					this._cells.push(row);
+				}
+			}
+		}
+    	for (let y = 0; y < h; ++y) {
+			this._lazyResizeRow(this._cells[y], w, y);
+		}
 	}
 
     /**
@@ -152,6 +199,22 @@ class Grid {
 		this.cells = g;
 	}
 
+	/**
+	 * resize grid according to lazyMode (or efficient mode)
+	 * lazy mode : will only create necessary new cells, existing cells will be preserved. outbound cells will be dropped out
+	 * ,p, lazy mode : will entirely rebuild grid.
+	 * @param w {number}
+	 * @param h {number}
+	 * @private
+	 */
+	_resize(w, h) {
+		if (this._lazyMode) {
+			this._lazyResizeGrid(w, h);
+		} else {
+			this._rebuild(w, h);
+		}
+	}
+
     /**
 	 * Sets/Gets a cell value given its coordinates
      * @param x {number}
@@ -171,6 +234,71 @@ class Grid {
 				this._cells[y][x] = v;
 			}
 			return this;
+		}
+	}
+
+	_shiftArray(grid, direction, nCount = 1) {
+		for (let i = 0; i < nCount; ++i) {
+			switch (direction) {
+				case 'n': {
+					grid.push(grid.shift());
+					break;
+				}
+
+				case 's': {
+					grid.unshift(grid.pop());
+					break;
+				}
+
+				case 'e': {
+					grid.forEach(row => {
+						row.unshift(row.pop());
+					});
+					break;
+				}
+
+				case 'w': {
+					grid.forEach(row => {
+						row.push(row.shift());
+					});
+					break;
+				}
+			}
+		}
+	}
+
+	scroll(direction, count) {
+		this._shiftArray(this._cells, direction, count);
+	}
+
+	scrollRegion(x, y, nw, nh, direction, count = 1) {
+		const regionXYWH = this.getRegion(x, y, nw, nh)
+		if (regionXYWH.width * regionXYWH.height === 0) {
+			return;
+		}
+		const grid = this._cells;
+		const localGrid = [];
+		const region = {
+			x1: regionXYWH.x,
+			y1: regionXYWH.y,
+			x2: regionXYWH.x + regionXYWH.width - 1,
+			y2: regionXYWH.y + regionXYWH.height - 1,
+		}
+		const {x1, y1, x2, y2} = region;
+		// copier la partie de grille qui va bouger
+		for (let y = 0; y < (y2 - y1 + 1); ++y) {
+			const row = [];
+			for (let x = 0; x < (x2 - x1 + 1); ++x) {
+				row.push(grid[y + y1][x + x1]);
+			}
+			localGrid.push(row);
+		}
+		this._shiftArray(localGrid, direction, count);
+		// replacer la grille
+		for (let y = 0; y < (y2 - y1 + 1); ++y) {
+			for (let x = 0; x < (x2 - x1 + 1); ++x) {
+				grid[y + y1][x + x1] = localGrid[y][x];
+			}
 		}
 	}
 }
