@@ -4,7 +4,7 @@
  * When new items are needed (when the grid changes size and gets larger)
  * an event is fired : "rebuild" which can be handled to construct cell content.
  */
-import Events from 'events';
+const Events = require('events');
 
 class Grid {
 	constructor() {
@@ -15,10 +15,15 @@ class Grid {
         this._lazyMode = false;
 	}
 
-    on(...args) { this._events.on(...args); return this; }
-    off(...args) { this._events.off(...args); return this; }
-    one(...args) { this._events.once(...args); return this; }
-    emit(...args) { this._events.emit(...args); return this; }
+	/**
+	 * defines a new event
+	 * @param args
+	 * @returns {Grid}
+	 */
+    on(...args) { return this._events.on(...args); }
+    off(...args) { return this._events.off(...args); }
+    once(...args) { return this._events.once(...args); }
+    emit(...args) { return this._events.emit(...args); }
 
 	get lazy() {
 		return this._lazyMode;
@@ -303,4 +308,4 @@ class Grid {
 	}
 }
 
-export default Grid;
+module.exports = Grid;

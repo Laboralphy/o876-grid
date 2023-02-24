@@ -1,4 +1,4 @@
-import Grid from '../src/Grid';
+const Grid = require('../src/Grid');
 
 describe('#grid', function() {
     describe('clipAxis', function () {

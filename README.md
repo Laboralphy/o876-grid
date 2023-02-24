@@ -2,10 +2,13 @@
 A grid manager.
 
 ## Definition
-A grid is an array of arrays of cells.
-This class allows you to simply resize a 2-dimensional array of cells. 
-Each cell may hold any value of any type, including number, string, objects 
-or other grids.
+- A grid is a two dimensional array cells.
+- A cell may contain any thing, number, strings, objects...
+
+This class allows you to simply resize a grid, and provide :
+- Events to notify grid size alterations.
+- Function initializer
+- A lazy mode to call function initializer only on cell that are actually created when resize a bigger grid.
 
 ## a few examples
 
@@ -36,15 +39,29 @@ when grid size changes, all cells are rebuilt
 ```application/javascript
 const g = new Grid();
 const f1 = data => data.cell = 1;
-const f2 = data => data.cell = 2;
 
 // set initial rebuild event handler
 g.on('rebuild', f1);
 g.width = 3;
 g.height = 3;
+```
 
+will print
+
+```application/javascript
+[ [ 1, 1, 1 ], 
+  [ 1, 1, 1 ], 
+  [ 1, 1, 1 ]
+]
+```
+
+and now resize grid with another cell initializer
+
+```application/javascript
 // change rebuild event handler
-g.off('rebuild', f1);
+const f2 = data => data.cell = 2;
+
+g.off('rebuild', f1); // removing previous initializer
 g.on('rebuild', f2);
 
 // change size
@@ -61,8 +78,9 @@ will print :
   [ 2, 2, 2, 2 ] ]
 ```
 
-###lazy mode
-In lazy mode this is not true :
+### lazy mode
+
+In lazy mode, only new built cells are initialized, the unchanged cells are not :
 
 ```application/javascript
 const g = new Grid();
